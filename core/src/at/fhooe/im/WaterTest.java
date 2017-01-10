@@ -20,12 +20,12 @@ import com.badlogic.gdx.utils.GdxRuntimeException;
 
 
 public class WaterTest extends ApplicationAdapter {
-	protected static ShaderProgram createMeshShader() {
+	protected static ShaderProgram createMeshShader(String shaderName) {
 		ShaderProgram.pedantic = false;
 		ShaderProgram shader = null;
 		try {
-			shader = new ShaderProgram(Util.readFile(Util.getResourceAsStream("shader/shader.vertex.glsl")), 
-					Util.readFile(Util.getResourceAsStream("shader/shader.fragment.glsl")));
+			shader = new ShaderProgram(Util.readFile(Util.getResourceAsStream("shader/"+shaderName+".vertex.glsl")), 
+					Util.readFile(Util.getResourceAsStream("shader/"+shaderName+".fragment.glsl")));
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -40,8 +40,13 @@ public class WaterTest extends ApplicationAdapter {
 	SpriteBatch batch;
 	Texture img;
 	Model plane;
-	Mesh mesh;
-	ShaderProgram shader;
+	Model cube;
+	Mesh planeMesh;
+	Mesh cubeMesh;
+	Mesh[] lighthouseMeshes;
+	Model lightHouse;
+	ShaderProgram waterShader;
+	ShaderProgram lighthouseShader;
 	private PerspectiveCamera cam;
 	private CameraInputController camController;
 	private float time = 0.0f;
@@ -53,19 +58,17 @@ public class WaterTest extends ApplicationAdapter {
 	TextureData[] textureData;
 	int numWaves = 3;
 	Cubemap mapCube;
-	Model triangle;
 	
 	@Override
 	public void create () {
 		Gdx.gl.glEnable(GL20.GL_DEPTH_TEST);
 		
-		img = new Texture("lostvalley_up.bmp");
-		Texture posX = new Texture("lostvalley_east.bmp");
-		Texture negX = new Texture("lostvalley_west.bmp");
-		Texture posY = new Texture("lostvalley_up.bmp");
-		Texture negY = new Texture("lostvalley_down.bmp");
-		Texture posZ = new Texture("lostvalley_north.bmp");
-		Texture negZ = new Texture("lostvalley_south.bmp");
+		Texture posX = new Texture("water/lostvalley_east.bmp");
+		Texture negX = new Texture("water/lostvalley_west.bmp");
+		Texture posY = new Texture("water/lostvalley_up.bmp");
+		Texture negY = new Texture("water/lostvalley_down.bmp");
+		Texture posZ = new Texture("water/lostvalley_north.bmp");
+		Texture negZ = new Texture("water/lostvalley_south.bmp");
 		
 		textureData = new TextureData[6];
 		
@@ -79,19 +82,54 @@ public class WaterTest extends ApplicationAdapter {
 		mapCube = new Cubemap(textureData[0], textureData[1], textureData[2], textureData[3], textureData[4], textureData[5]);
 		
 		ObjLoader objLoader = new ObjLoader();
-		FileHandle fh = Gdx.files.internal("plane.obj");
+		FileHandle fh = Gdx.files.internal("water/bigplane.obj");
 		if(!fh.exists()) {
 			System.err.println("file not found");
 		}
 		plane = objLoader.loadModel(fh);
-		mesh = plane.meshes.get(0);
+		planeMesh = plane.meshes.first();
+		
+		fh = Gdx.files.internal("lighthouse/lighthouse.obj");
+		if(!fh.exists()) {
+			System.err.println("lighthouse.obj not found");
+		}
+		lightHouse = objLoader.loadModel(fh);
+		
+		lighthouseMeshes = new Mesh[3];
+		
+		fh = Gdx.files.internal("lighthouse/roof.obj");
+		if(!fh.exists()) {
+			System.err.println("roof does not exist");
+		}
+		lighthouseMeshes[0] = objLoader.loadModel(fh).meshes.first();
+		
+		fh = Gdx.files.internal("lighthouse/tower.obj");
+		if(!fh.exists()) {
+			System.err.println("tower does not exist!");
+		}
+		lighthouseMeshes[1] = objLoader.loadModel(fh).meshes.first();
+		
+		fh = Gdx.files.internal("lighthouse/sticks.obj");
+		if(!fh.exists()) {
+			System.err.println("tower does not exist!");
+		}
+		lighthouseMeshes[2] = objLoader.loadModel(fh).meshes.first();
 		
 		
-		shader = createMeshShader();
+		
+		fh = Gdx.files.internal("cube.obj");
+		if(!fh.exists()) {
+			System.err.println("cube not found");
+		}
+		cube = objLoader.loadModel(fh);
+		cubeMesh = cube.meshes.first();
+		
+		waterShader = createMeshShader("water");
+		lighthouseShader = createMeshShader("lighthouse");
 		
 		cam = new PerspectiveCamera(67, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
-        cam.position.set(0f, 2f, -2f);
-        cam.lookAt(0,0,0);
+        cam.position.set(0f, 5f, 25f);
+        cam.lookAt(0,0,0f);
         cam.near = 1f;
         cam.far = 300f;
         cam.update();
@@ -122,7 +160,20 @@ public class WaterTest extends ApplicationAdapter {
 	    Gdx.gl20.glTexParameteri ( GL20.GL_TEXTURE_CUBE_MAP, GL20.GL_TEXTURE_WRAP_T, GL20.GL_CLAMP_TO_EDGE );   
 
 	    Gdx.gl20.glGenerateMipmap(GL20.GL_TEXTURE_CUBE_MAP);
+	    
+	    
+	    Gdx.gl20.glActiveTexture(GL20.GL_TEXTURE0);
+	    img = new Texture("lighthouse/roof.png");
 		img.bind();
+		
+	
+		Gdx.gl20.glActiveTexture(GL20.GL_TEXTURE1);
+		Texture textureTower = new Texture("lighthouse/wall.jpg");
+		textureTower.bind();
+		
+		Gdx.gl20.glActiveTexture(GL20.GL_TEXTURE2);
+		Texture textureStick = new Texture("lighthouse/wall.jpg");
+		textureStick.bind();
 	}
 	
 	public void randomGenerator() {
@@ -139,11 +190,11 @@ public class WaterTest extends ApplicationAdapter {
 		int dirPointer = 0;
 		direction = new float[numWaves * 2];
 		for (int i = 0; i < numWaves; i++) {
-	        amplitude[i] = (float)(0.2f / (i + 1));
+	        amplitude[i] = (float)(0.4f / (i + 1));
 
-	        wavelength[i] = (float)(2.0 * 3.141592654 / (i + 1));
+	        wavelength[i] = (float)(10.0 * 3.141592654 / (i + 1));
 
-	        speed[i] = 0.1f*i;
+	        speed[i] = 1.0f*i;
 	        
 	        double angle = (Math.random() * 2.094395102393195 - 1.047197551196598);
 	        
@@ -156,30 +207,42 @@ public class WaterTest extends ApplicationAdapter {
 	public void render () {
 		Gdx.gl.glClearColor(0, 0, 0, 1);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
-		shader.begin();
+		waterShader.begin();
 		
-		shader.setUniformMatrix("u_projTrans", cam.combined);
+		waterShader.setUniformMatrix("u_projTrans", cam.combined);
 		eyePos[0] = cam.position.x;
 		eyePos[1] = cam.position.y;
 		eyePos[2] = cam.position.z;
 		
-		shader.setUniform3fv("u_eyePos", eyePos, 0, 3);
-		shader.setUniformf("time", time);
+		waterShader.setUniform3fv("u_eyePos", eyePos, 0, 3);
+		waterShader.setUniformf("time", time);
 		
-		shader.setUniformf("waterHeight", 0.6f);
-		shader.setUniformi("numWaves", numWaves);
-		shader.setUniform1fv("amplitude", amplitude, 0, numWaves);
-		shader.setUniform1fv("wavelength", wavelength, 0, numWaves);
-		shader.setUniform1fv("speed", speed, 0, numWaves);
-		shader.setUniform2fv("direction", direction, 0, numWaves * 2);
+		waterShader.setUniformf("waterHeight", 0.6f);
+		waterShader.setUniformi("numWaves", numWaves);
+		waterShader.setUniform1fv("amplitude", amplitude, 0, numWaves);
+		waterShader.setUniform1fv("wavelength", wavelength, 0, numWaves);
+		waterShader.setUniform1fv("speed", speed, 0, numWaves);
+		waterShader.setUniform2fv("direction", direction, 0, numWaves * 2);
 		time += 0.1f;
 	
-	    shader.setUniformi("u_texture", 0);
+	    planeMesh.render(waterShader, GL20.GL_TRIANGLES, 0, planeMesh.getMaxIndices());
+	    waterShader.end();
 	    
-		mesh.render(shader, GL20.GL_TRIANGLES, 0, mesh.getMaxVertices());
+	    lighthouseShader.begin();
+	    lighthouseShader.setUniformMatrix("u_projTrans", cam.combined);
+
+		//Mesh currMesh = lightHouse.meshes.get(0);
+		
+		
+		//currMesh.render(lighthouseShader, GL20.GL_TRIANGLES, 0, currMesh.getMaxIndices());
+		int currTexture = 0;
+		for(Mesh currMesh : lighthouseMeshes) {
+			lighthouseShader.setUniformi("u_texture", currTexture++);
+			currMesh.render(lighthouseShader, GL20.GL_TRIANGLES, 0, currMesh.getMaxIndices());
+		}
 		
 		//ec.render(cam);
-		shader.end();
+		lighthouseShader.end();
 	}
 	
 	public float[] randomEight(double min, double max, int numbers) {
