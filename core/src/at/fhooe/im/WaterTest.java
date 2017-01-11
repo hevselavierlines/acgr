@@ -55,8 +55,13 @@ public class WaterTest extends ApplicationAdapter {
 	float[] speed;
 	float[] direction;
 	float[] eyePos = new float[3];
+	float[] lightDir0 = new float[3];
+	float[] lightDir1 = new float[3];
+	float lighthouseAngle0 = 0.0f;
+	float lighthouseAngle1 = 180.0f;
 	TextureData[] textureData;
 	int numWaves = 3;
+	final float[] lighthousePos = new float[] {10.0f, 50.0f, 60.0f, 1.0f};
 	Cubemap mapCube;
 	
 	@Override
@@ -115,8 +120,6 @@ public class WaterTest extends ApplicationAdapter {
 		}
 		lighthouseMeshes[2] = objLoader.loadModel(fh).meshes.first();
 		
-		
-		
 		fh = Gdx.files.internal("cube.obj");
 		if(!fh.exists()) {
 			System.err.println("cube not found");
@@ -128,10 +131,10 @@ public class WaterTest extends ApplicationAdapter {
 		lighthouseShader = createMeshShader("lighthouse");
 		
 		cam = new PerspectiveCamera(67, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
-        cam.position.set(0f, 5f, 25f);
-        cam.lookAt(0,0,0f);
+        cam.position.set(0f, 50f, 300f);
+        cam.lookAt(0f, 0f, 100f);
         cam.near = 1f;
-        cam.far = 300f;
+        cam.far = 900f;
         cam.update();
         
         camController = new CameraInputController(cam);
@@ -163,7 +166,7 @@ public class WaterTest extends ApplicationAdapter {
 	    
 	    
 	    Gdx.gl20.glActiveTexture(GL20.GL_TEXTURE0);
-	    img = new Texture("lighthouse/roof.png");
+	    img = new Texture("lighthouse/wall.png");
 		img.bind();
 		
 	
@@ -174,6 +177,22 @@ public class WaterTest extends ApplicationAdapter {
 		Gdx.gl20.glActiveTexture(GL20.GL_TEXTURE2);
 		Texture textureStick = new Texture("lighthouse/wall.jpg");
 		textureStick.bind();
+		
+		Gdx.gl20.glActiveTexture(GL20.GL_TEXTURE3);
+		Texture texture3 = new Texture("lighthouse/roof.png");
+		texture3.bind();
+		
+		Gdx.gl20.glActiveTexture(GL20.GL_TEXTURE4);
+		Texture texture4 = new Texture("lighthouse/wall.jpg");
+		texture4.bind();
+		
+		Gdx.gl20.glActiveTexture(GL20.GL_TEXTURE5);
+		Texture texture5 = new Texture("lighthouse/grass.jpg");
+		texture5.bind();
+		
+		Gdx.gl20.glActiveTexture(GL20.GL_TEXTURE6);
+		Texture texture6 = new Texture("lighthouse/wall.jpg");
+		texture6.bind();
 	}
 	
 	public void randomGenerator() {
@@ -210,11 +229,22 @@ public class WaterTest extends ApplicationAdapter {
 		waterShader.begin();
 		
 		waterShader.setUniformMatrix("u_projTrans", cam.combined);
+		
 		eyePos[0] = cam.position.x;
 		eyePos[1] = cam.position.y;
 		eyePos[2] = cam.position.z;
-		
 		waterShader.setUniform3fv("u_eyePos", eyePos, 0, 3);
+		
+		lightDir0[0] = (float) Math.sin(Math.toRadians(lighthouseAngle0));
+		lightDir0[1] = 0.0f;
+		lightDir0[2] = (float) Math.cos(Math.toRadians(lighthouseAngle0));
+		
+		lightDir1[0] = (float) Math.sin(Math.toRadians(lighthouseAngle0 - 180.0f));
+		lightDir1[1] = 0.0f;
+		lightDir1[2] = (float) Math.cos(Math.toRadians(lighthouseAngle0 - 180.0f));
+		lighthouseAngle0 += 0.5f;
+		waterShader.setUniform3fv("Light_coneDirection0", lightDir0, 0, 3);
+		waterShader.setUniform3fv("Light_coneDirection1", lightDir1, 0, 3);
 		waterShader.setUniformf("time", time);
 		
 		waterShader.setUniformf("waterHeight", 0.6f);
@@ -223,25 +253,28 @@ public class WaterTest extends ApplicationAdapter {
 		waterShader.setUniform1fv("wavelength", wavelength, 0, numWaves);
 		waterShader.setUniform1fv("speed", speed, 0, numWaves);
 		waterShader.setUniform2fv("direction", direction, 0, numWaves * 2);
+		waterShader.setUniform4fv("Light_position", lighthousePos, 0, lighthousePos.length);
+		
 		time += 0.1f;
 	
 	    planeMesh.render(waterShader, GL20.GL_TRIANGLES, 0, planeMesh.getMaxIndices());
 	    waterShader.end();
 	    
 	    lighthouseShader.begin();
+	    lighthouseShader.setUniform4fv("Light_position", lighthousePos, 0, lighthousePos.length);
 	    lighthouseShader.setUniformMatrix("u_projTrans", cam.combined);
-
-		//Mesh currMesh = lightHouse.meshes.get(0);
-		
-		
-		//currMesh.render(lighthouseShader, GL20.GL_TRIANGLES, 0, currMesh.getMaxIndices());
 		int currTexture = 0;
-		for(Mesh currMesh : lighthouseMeshes) {
+		for(Mesh currMesh : lightHouse.meshes) {
 			lighthouseShader.setUniformi("u_texture", currTexture++);
 			currMesh.render(lighthouseShader, GL20.GL_TRIANGLES, 0, currMesh.getMaxIndices());
 		}
-		
-		//ec.render(cam);
+			//0 = tower
+			//1 = pillar
+			
+//		for(Mesh currMesh : lighthouseMeshes) {
+//			lighthouseShader.setUniformi("u_texture", currTexture++);
+//			currMesh.render(lighthouseShader, GL20.GL_TRIANGLES, 0, currMesh.getMaxIndices());
+//		}
 		lighthouseShader.end();
 	}
 	
@@ -257,5 +290,10 @@ public class WaterTest extends ApplicationAdapter {
 	public void dispose () {
 		plane.dispose();
 		img.dispose();
+		for(Mesh currMesh : lighthouseMeshes) {
+			currMesh.dispose();
+			currMesh = null;
+		}
+		lighthouseMeshes = null;
 	}
 }

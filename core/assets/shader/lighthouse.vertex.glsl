@@ -10,15 +10,17 @@ varying vec2 v_texCoord;
 
 //uniforms
 uniform mat4 u_projTrans;
+uniform vec4 Light_position;
 
 void main() {
 	// Output position of the vertex, in clip space : MVP * position
 	vec4 vertex = vec4(a_position, 1.0);
-	vertex.x /= 10.0;
-	vertex.y /= 10.0;
-	vertex.z /= 10.0;
+	vertex.x /= 20.0;
+	vertex.y /= 19.0;
+	vertex.z /= 20.0;
 
-	vertex.z += 50.0;
+	vertex.x += Light_position.x;
+	vertex.z += Light_position.z;
 
 	v_texCoord = a_texCoord0;
 	gl_Position = u_projTrans * vertex;
