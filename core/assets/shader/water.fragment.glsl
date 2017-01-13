@@ -11,10 +11,12 @@ uniform mat4 u_projTrans;
 uniform vec4 Light_position;
 uniform vec3 Light_coneDirection0;
 uniform vec3 Light_coneDirection1;
-const vec3 Light_intensities = vec3(1.0, 0.8, 0.5);//vec3(0.937, 0.9098, 0.8431);
+
+uniform float Light_ambientCoefficient;
+uniform vec3 Light_intensities;//vec3(0.937, 0.9098, 0.8431);
 
 const float Light_attenuation = 0.001;
-const float Light_ambientCoefficient = 0.5;
+
 const float Light_coneAngle = 0.9;
 
 
