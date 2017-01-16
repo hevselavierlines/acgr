@@ -8,13 +8,13 @@ import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Cubemap;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Mesh;
-import com.badlogic.gdx.graphics.PerspectiveCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.TextureData;
+import com.badlogic.gdx.graphics.VertexAttribute;
+import com.badlogic.gdx.graphics.VertexAttributes;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.loader.ObjLoader;
-import com.badlogic.gdx.graphics.g3d.utils.CameraInputController;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.GdxRuntimeException;
@@ -46,11 +46,11 @@ public class WaterTest extends ApplicationAdapter {
 	Mesh cubeMesh;
 	Mesh lightSphere;
 	Model lightHouse;
+	Mesh screenRect;
 	ShaderProgram waterShader;
 	ShaderProgram lighthouseShader;
 	ShaderProgram lightsphereShader;
 	private MyCamera cam;
-	private CameraInputController camController;
 	private float time = 0.0f;
 	float[] amplitude;
 	float[] wavelength;
@@ -65,15 +65,41 @@ public class WaterTest extends ApplicationAdapter {
 	float brightness = 0.25f;
 	TextureData[] textureData;
 	int numWaves = 3;
-	final float[] lightColor = new float[] {1.0f, 0.8f, 0.5f};
+	final float[] lightColor = new float[] {1.0f, 0.5f, 0.01f};
 	final float[] lighthousePos = new float[] {10.0f, 50.0f, 60.0f, 1.0f};
 	private float cameraAngle = 0.0f;
 	Cubemap mapCube;
 	
+	private Mesh createScreenRect() {
+		float vertices[] = new float[]{
+				-0.1f, -0.08f, -1.0f,
+				0.0f, 0.0f, -1.0f,
+				0.0f, 0.0f,
+				
+				-0.1f, 0.08f, -1.0f,
+				0.0f, 0.0f, -1.0f,
+				0.0f, 1.0f,
+				
+				0.1f, -0.08f, -1.0f,
+				0.0f, 0.0f, -1.0f,
+				1.0f, 0.0f,
+				
+				0.1f, 0.08f, -1.0f,
+				0.0f, 0.0f, -1.0f,
+				1.0f, 1.0f
+		};
+		short indices[] = new short[] {
+				0, 1, 2,
+				1, 3, 2
+		};
+		Mesh ret = new Mesh(true, vertices.length, indices.length, VertexAttribute.Position(), VertexAttribute.Normal(), VertexAttribute.TexCoords(0));
+		ret.setVertices(vertices);
+		ret.setIndices(indices);
+		return ret;
+	}
+	
 	@Override
 	public void create () {
-		Gdx.gl.glEnable(GL20.GL_DEPTH_TEST);
-		
 		Texture posX = new Texture("water/lostvalley_east.bmp");
 		Texture negX = new Texture("water/lostvalley_west.bmp");
 		Texture posY = new Texture("water/lostvalley_up.bmp");
@@ -185,6 +211,12 @@ public class WaterTest extends ApplicationAdapter {
 		Gdx.gl20.glActiveTexture(GL20.GL_TEXTURE6);
 		Texture texture6 = new Texture("lighthouse/wall.jpg");
 		texture6.bind();
+		
+		Gdx.gl20.glActiveTexture(GL20.GL_TEXTURE7);
+		Texture texture7 = new Texture("halo.bmp");
+		texture7.bind();
+		
+		screenRect = createScreenRect();
 	}
 	
 	public void randomGenerator() {
@@ -219,6 +251,8 @@ public class WaterTest extends ApplicationAdapter {
 		Gdx.gl.glClearColor(0, 0, 0, 1);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
 		waterShader.begin();
+		Gdx.gl.glEnable(GL20.GL_DEPTH_TEST);
+		Gdx.gl.glDisable(GL20.GL_BLEND);
 		if(time <= 100.0f) {
 			cam.position.set(new Vector3(-50.0f, 50.0f, time * 2.0f));
 			cam.lookAt(lighthousePos[0], 0.0f, lighthousePos[2]);
@@ -237,8 +271,6 @@ public class WaterTest extends ApplicationAdapter {
 		}
 		waterShader.setUniformMatrix("u_projTrans", cam.combined);
 		
-		
-		
 		eyePos[0] = cam.position.x;
 		eyePos[1] = cam.position.y;
 		eyePos[2] = cam.position.z;
@@ -252,6 +284,7 @@ public class WaterTest extends ApplicationAdapter {
 		lightDir1[1] = 0.0f;
 		lightDir1[2] = (float) Math.cos(Math.toRadians(lighthouseAngle0 - 180.0f));
 		lighthouseAngle0 += 0.5f;
+		
 		waterShader.setUniform3fv("Light_coneDirection0", lightDir0, 0, 3);
 		waterShader.setUniform3fv("Light_coneDirection1", lightDir1, 0, 3);
 		waterShader.setUniformf("Light_ambientCoefficient", brightness);
@@ -281,12 +314,18 @@ public class WaterTest extends ApplicationAdapter {
 			currMesh.render(lighthouseShader, GL20.GL_TRIANGLES, 0, currMesh.getMaxIndices());
 		}
 		lighthouseShader.end();
-		
+		Gdx.gl.glDisable(GL20.GL_DEPTH_TEST);
+		Gdx.gl.glEnable(GL20.GL_BLEND);
+		Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
 		lightsphereShader.begin();
 		lightsphereShader.setUniform4fv("Light_position", lighthousePos, 0, lighthousePos.length);
-	    lightsphereShader.setUniformMatrix("u_projTrans", cam.combined);
+		lightsphereShader.setUniformMatrix("u_projProj", cam.projection);
+	    lightsphereShader.setUniformMatrix("u_projView", cam.view);
 	    lightsphereShader.setUniform3fv("Light_intensities", lightColor, 0, lightColor.length);
-	    lightSphere.render(lightsphereShader, GL20.GL_TRIANGLES, 0, lightSphere.getMaxIndices());
+	    lightsphereShader.setUniformi("u_texture", 7);
+	    //lightSphere.render(lightsphereShader, GL20.GL_TRIANGLES, 0, lightSphere.getMaxIndices());
+	    
+	    screenRect.render(lightsphereShader, GL20.GL_TRIANGLES, 0, screenRect.getMaxIndices());
 		lightsphereShader.end();
 	}
 	
