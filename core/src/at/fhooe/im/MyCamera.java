@@ -13,6 +13,8 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.math.collision.Ray;
 
 public final class MyCamera {
+	private float[] lightHousePos;
+	private float cameraAngle = 0.0f;
 	/** the field of view of the height, in degrees **/
 	public float fieldOfView = 67;
 	/** the position of the camera **/
@@ -66,6 +68,19 @@ public final class MyCamera {
 	public void update () {
 		update(true);
 	}
+	
+
+	public float[] getLightHousePos() {
+		return lightHousePos;
+	}
+
+
+
+	public void setLightHousePos(float[] lightHousePos) {
+		this.lightHousePos = lightHousePos;
+	}
+
+
 
 	public void update (boolean updateFrustum) {
 		float aspect = viewportWidth / viewportHeight;
@@ -282,6 +297,24 @@ public final class MyCamera {
 	 * @return the picking Ray. */
 	public Ray getPickRay (float screenX, float screenY) {
 		return getPickRay(screenX, screenY, 0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+	}
+	
+	public void calculateNextCameraPosition(float time, float rotationDistance) {
+//		if(time <= 100.0f) {
+//			position.set(new Vector3(-50.0f, 50.0f, time * 2.0f));
+//			lookAt(lightHousePos[0], 0.0f, lightHousePos[2]);
+//			setUpY();
+//		}
+//		if(time > 100.0f) {
+			position.set((float)(Math.sin(cameraAngle) * rotationDistance) + lightHousePos[0], 1000.0f, (float)(Math.cos(cameraAngle) * rotationDistance) + lightHousePos[2]);
+			lookAt(lightHousePos[0], 0.0f, lightHousePos[2]);
+			setUpY();
+			update();
+			cameraAngle += 0.005f;
+			if(cameraAngle >= 6.283185307179586f) {
+				cameraAngle = 0;
+			}
+//		}
 	}
 }
 

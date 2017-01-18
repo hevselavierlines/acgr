@@ -16,8 +16,8 @@ uniform vec4 Light_position;
 void main() {
 	// Output position of the vertex, in clip space : MVP * position
 	vec4 vertex = vec4(a_position, 1.0);
-	vertex.x *= 10.0;
-	vertex.y *= 10.0;
+	//vertex.x *= 10.0;
+	//vertex.y *= 10.0;
 	//vertex.x /= 30.0;
 	//vertex.y /= 30.0;
 	//vertex.z /= 30.0;

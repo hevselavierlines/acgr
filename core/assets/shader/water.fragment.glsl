@@ -6,7 +6,6 @@ varying float v_time;
 uniform vec3 u_eyePos;
 uniform samplerCube u_environmentCubemap;
 uniform sampler2D u_texture;
-uniform mat4 u_projTrans;
 
 uniform vec4 Light_position;
 uniform vec3 Light_coneDirection0;
@@ -15,10 +14,8 @@ uniform vec3 Light_coneDirection1;
 uniform float Light_ambientCoefficient;
 uniform vec3 Light_intensities;//vec3(0.937, 0.9098, 0.8431);
 
-const float Light_attenuation = 0.001;
-
-const float Light_coneAngle = 0.9;
-
+uniform float Light_attenuation;
+uniform float Light_coneAngle;
 
 const float shininess = 1.0;
 
