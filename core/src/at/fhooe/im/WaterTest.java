@@ -43,10 +43,9 @@ public class WaterTest extends ApplicationAdapter implements InputProcessor {
 	private Skybox skybox;
 	private Beach beach;
 	private boolean automaticRotation = true;
-	private float rotationDistance = 2000.0f;
 	private final float WATER_SPEED = 1.0f;
-	private final float WATER_AMPLITUDE = 1.0f;
-	private final float WATER_WAVELENGTH = 20.0f;
+	private final float WATER_AMPLITUDE = 0.6f;
+	private final float WATER_WAVELENGTH = 30.0f;
 	private Castle castle;
 	
 	public final static float[] LIGHT_COLOR = new float[] {0.94f, 0.856f, 0.934f};
@@ -239,8 +238,7 @@ public class WaterTest extends ApplicationAdapter implements InputProcessor {
 		
 		//this calculates the next position for the camera motion
 		if(automaticRotation) {
-			cameraTime += 0.1f;
-			cam.calculateNextCameraPosition(cameraTime, rotationDistance);
+			cam.calculateNextCameraPosition();
 			cam.update();
 		}
 		
@@ -340,7 +338,6 @@ public class WaterTest extends ApplicationAdapter implements InputProcessor {
 
 	@Override
 	public boolean keyTyped(char character) {
-		System.out.println((int)character);
 		switch(character) {
 		case 63236:
 			brightness -= 0.05f;
@@ -357,16 +354,6 @@ public class WaterTest extends ApplicationAdapter implements InputProcessor {
 			}
 			skybox.setBrightness(brightness);
 			beach.setBrightness(brightness);
-			break;
-		case 63232:
-			rotationDistance -= 100.0f;
-			cam.calculateNextCameraPosition(cameraTime, rotationDistance);
-			cam.update();
-			break;
-		case 63233:
-			rotationDistance += 100.0f;
-			cam.calculateNextCameraPosition(cameraTime, rotationDistance);
-			cam.update();
 			break;
 		case 32:
 			automaticRotation = !automaticRotation;

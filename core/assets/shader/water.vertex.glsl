@@ -64,8 +64,8 @@ vec3 waveNormal(float x, float y) {
 void main() {
 	// Output position of the vertex, in clip space : MVP * position
 	vec3 vertex = a_position;
-	//vertex.x = vertex.x * log(abs(vertex.x)) * 4.0;
-	//vertex.z = vertex.z * log(abs(vertex.z)) * 4.0;
+	vertex.x = vertex.x * log(abs(vertex.x));
+	vertex.z = vertex.z * log(abs(vertex.z));
 	if(vertex.z >= -600.0) {
 		vertex.z -= waveHeight(vertex.x, vertex.z) * 50.0;
 	}

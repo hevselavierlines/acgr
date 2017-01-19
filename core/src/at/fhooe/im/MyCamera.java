@@ -15,8 +15,11 @@ import com.badlogic.gdx.math.collision.Ray;
 public final class MyCamera {
 	private float[] lightHousePos;
 	private float cameraAngle = 0.0f;
+	private float positionY = 2000.0f;
+	private Vector3 lastPosition;
 	/** the field of view of the height, in degrees **/
 	public float fieldOfView = 67;
+	private int time = 0;
 	/** the position of the camera **/
 	public final Vector3 position = new Vector3();
 	/** the unit length direction vector of the camera **/
@@ -299,22 +302,110 @@ public final class MyCamera {
 		return getPickRay(screenX, screenY, 0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 	}
 	
-	public void calculateNextCameraPosition(float time, float rotationDistance) {
-//		if(time <= 100.0f) {
-//			position.set(new Vector3(-50.0f, 50.0f, time * 2.0f));
-//			lookAt(lightHousePos[0], 0.0f, lightHousePos[2]);
-//			setUpY();
-//		}
-//		if(time > 100.0f) {
-			position.set((float)(Math.sin(cameraAngle) * rotationDistance) + lightHousePos[0], 1000.0f, (float)(Math.cos(cameraAngle) * rotationDistance) + lightHousePos[2]);
-			lookAt(lightHousePos[0], 0.0f, lightHousePos[2]);
-			setUpY();
-			update();
-			cameraAngle += 0.005f;
-			if(cameraAngle >= 6.283185307179586f) {
-				cameraAngle = 0;
-			}
-//		}
+	public void positionAnimateTo(Vector3 startPos, Vector3 endPos, int startTime, int endTime) {
+		position.set(calculateIntermediatePos(startPos, endPos, startTime, endTime));
 	}
+	
+	public Vector3 calculateIntermediatePos(Vector3 startPos, Vector3 endPos, int startTime, int endTime) {
+		float steps = endTime - startTime;
+		float xPerFragm = (endPos.x - startPos.x) / steps;
+		float yPerFragm = (endPos.y - startPos.y) / steps;
+		float zPerFragm = (endPos.z - startPos.z) / steps;
+		Vector3 ret = endPos;
+		if(time >= startTime && time <= endTime) {
+			ret = new Vector3(startPos.x + xPerFragm * (time - startTime),
+					startPos.y + yPerFragm * (time - startTime),
+					startPos.z + zPerFragm * (time - startTime));
+		}
+		if(time == endTime) {
+			lastPosition = ret;
+		}
+		
+		return ret;
+	}
+	
+	public void lookAtAnimateto(Vector3 startPos, Vector3 endPos, int startTime, int endTime) {
+		lookAt(calculateIntermediatePos(startPos, endPos, startTime, endTime));
+		setUpY();
+	}
+	
+	public void rotateAnimation(Vector3 startPos, Vector3 rotationPoint, float startAngle, float endAngle, int startTime, int endTime) {
+		float anglePerFrame = (endAngle - startAngle) / (endTime - startTime);
+		int relTime = time - startTime;
+		float rotationDistance = Math.abs(rotationPoint.z - startPos.z);
+		float angle = relTime * anglePerFrame + startAngle;
+		Vector3 pos = new Vector3((float)(Math.sin(angle) * rotationDistance) + rotationPoint.x, 
+					1000.0f, (float)(Math.cos(angle) * rotationDistance) + rotationPoint.z);
+		if(time <= endTime) {
+			position.set(pos);
+			lookAt(rotationPoint);
+			setUpY();
+		}
+		
+		if(time == endTime) {
+			lastPosition = pos;
+		}
+	}
+	
+	public void calculateNextCameraPosition() {
+		if(time <= 100) {
+			Vector3 startPos = new Vector3(1000.0f, 2500.0f, 3000.0f);
+			Vector3 endPos = new Vector3(1000.0f, 2000.0f, 1500.0f);
+			positionAnimateTo(startPos, endPos, 0, 100);
+			lookAtAnimateto(startPos.add(0, -1.0f, -1.0f), endPos.add(0,-0.5f,-1.0f), 0, 100);
+			
+		} else if(time <= 200) {
+			Vector3 startPos = new Vector3(lastPosition);
+			Vector3 endPos = new Vector3(1000.0f, 1500.0f, 0.0f);
+			positionAnimateTo(startPos, endPos, 101, 200);
+			lookAtAnimateto(startPos.add(0, -0.5f, -1.0f), endPos.add(0,-0.1f,-1.0f), 101, 200);
+		} else if(time <= 500) {
+			Vector3 startPos = new Vector3(lastPosition);
+			Vector3 endPos = new Vector3(1000.0f, 1000.0f, -4000.0f);
+			positionAnimateTo(startPos, endPos, 201, 500);
+			lookAtAnimateto(startPos.add(0, -0.1f, -1.0f), endPos.add(0,0,-1.0f), 201, 500);
+		} else if(time <= 600) {
+			Vector3 startPos = new Vector3(lastPosition);
+			Vector3 endPos = new Vector3(750.0f, 1000.0f, -4750.0f);
+			positionAnimateTo(startPos, endPos, 500, 600);
+			lookAtAnimateto(startPos.add(0, 0, -1.0f), endPos.add(-1.0f, 0, 0.0f), 500, 600);
+		} else if(time <= 800) {
+			Vector3 startPos = new Vector3(lastPosition);
+			Vector3 endPos = new Vector3(lightHousePos[0], 1000.0f, -3000.0f);
+			positionAnimateTo(startPos, endPos, 600, 800);
+			lookAtAnimateto(startPos.add(-1.0f, 0, 0), endPos.add(0, 0, 1.0f), 600, 800);
+		} else if(time <= 2000) {
+			Vector3 target = new Vector3(lightHousePos[0], 1000.0f, lightHousePos[2]);
+			Vector3 startPos = new Vector3(lastPosition);
+			rotateAnimation(startPos, target, (float) (Math.PI), (float) (Math.PI * 4), 800, 2000);
+		} else if(time <= 3000) {
+			Vector3 startPos = new Vector3(lastPosition);
+			Vector3 endPos = new Vector3(-1500.0f, 3500.0f, 4500.0f);
+			
+			Vector3 startTarget = new Vector3(lightHousePos[0], 1000.0f, lightHousePos[2]);
+			Vector3 endTarget = new Vector3(lightHousePos[0], 0.0f, lightHousePos[2]);
+			positionAnimateTo(startPos, endPos, 2000, 3000);
+			lookAtAnimateto(startTarget, endTarget, 2000, 3000);
+		}
+		time++;
+	}
+		
+//	if(time <= 100.0f) {
+//		float newPosZ = lightHousePos[2] + 1000.0f - (time * 100.0f);
+//		position.set(new Vector3(-100.0f, positionY, newPosZ));
+//		lookAt(-100.0f, positionY - 1.0f, newPosZ - 1.0f);
+//		positionY = 2000.0f - (time * 1.0f);
+//		setUpY();
+//	}
+//		if(time > 100.0f) {
+//				position.set((float)(Math.sin(cameraAngle) * rotationDistance) + lightHousePos[0], 1000.0f, (float)(Math.cos(cameraAngle) * rotationDistance) + lightHousePos[2]);
+//				lookAt(lightHousePos[0], 0.0f, lightHousePos[2]);
+//				setUpY();
+//				update();
+//				cameraAngle += 0.005f;
+//				if(cameraAngle >= 6.283185307179586f) {
+//					cameraAngle = 0;
+//				}
+//		}
 }
 
