@@ -14,8 +14,15 @@ import com.badlogic.gdx.math.collision.Ray;
 
 public final class MyCamera {
 	private float[] lightHousePos;
-	private float cameraAngle = 0.0f;
-	private float positionY = 2000.0f;
+	
+	private static final Vector3[] CASTLE_CORNERS = new Vector3[] {
+			new Vector3(-1201.188f, 1700.0f, 3470.757f),
+			new Vector3(1120.705f, 1700.0f, 3470.757f),
+			new Vector3(1120.705f, 1700.0f, 2617.947f),
+			new Vector3(-1201.188f, 1700.0f, 2617.947f)
+	};
+
+	private static final int START_WATER = 2400; 
 	private Vector3 lastPosition;
 	/** the field of view of the height, in degrees **/
 	public float fieldOfView = 67;
@@ -348,44 +355,90 @@ public final class MyCamera {
 	}
 	
 	public void calculateNextCameraPosition() {
-		if(time <= 100) {
-			Vector3 startPos = new Vector3(1000.0f, 2500.0f, 3000.0f);
+		if(time <= 400) {
+			Vector3 startPos = new Vector3(CASTLE_CORNERS[0]);
+			Vector3 endPos = new Vector3(CASTLE_CORNERS[1]);
+			positionAnimateTo(startPos, endPos, 0, 400);
+			lookAtAnimateto(startPos.add(1.0f, 0, 0.0f), endPos.add(1.0f,0,0), 0, 400);
+		} else if(time <= 500) {
+			Vector3 startPos = new Vector3(CASTLE_CORNERS[1]);
+			Vector3 endPos = new Vector3(CASTLE_CORNERS[1]);
+			lookAtAnimateto(startPos.add(1.0f, 0, 0), endPos.add(0,0,-1.0f), 400, 500);
+		} else if(time <= 700) {
+			Vector3 startPos = new Vector3(CASTLE_CORNERS[1]);
+			Vector3 endPos = new Vector3(CASTLE_CORNERS[2]);
+			positionAnimateTo(startPos, endPos, 500, 700);
+			lookAtAnimateto(startPos.add(0,0,-1.0f), endPos.add(0,0,-1.0f), 500, 700);
+		} else if(time <= 800) {
+			Vector3 startPos = new Vector3(CASTLE_CORNERS[2]);
+			Vector3 endPos = new Vector3(CASTLE_CORNERS[2]);
+			lookAtAnimateto(startPos.add(0, 0, -1.0f), endPos.add(-1.0f,0,0), 700, 800);
+		} else if(time <= 1200) {
+			Vector3 startPos = new Vector3(CASTLE_CORNERS[2]);
+			Vector3 endPos = new Vector3(CASTLE_CORNERS[3]);
+			positionAnimateTo(startPos, endPos, 800, 1200);
+			lookAtAnimateto(startPos.add(-1.0f,0,0), endPos.add(-1.0f,0,0), 800, 1200);
+		} else if(time <= 1300) {
+			Vector3 startPos = new Vector3(CASTLE_CORNERS[3]);
+			Vector3 endPos = new Vector3(CASTLE_CORNERS[3]);
+			lookAtAnimateto(startPos.add(-1.0f, 0, 0), endPos.add(0,0,1.0f), 1200, 1300);
+		} else if(time <= 1500) {
+			Vector3 startPos = new Vector3(CASTLE_CORNERS[3]);
+			Vector3 endPos = new Vector3(CASTLE_CORNERS[0]);
+			positionAnimateTo(startPos, endPos, 1300, 1500);
+			lookAtAnimateto(startPos.add(0,0,1.0f), endPos.add(0,0,1.0f), 1300, 1500);
+		} else if(time <= 1600) {
+			Vector3 startPos = new Vector3(CASTLE_CORNERS[0]);
+			Vector3 endPos = new Vector3(CASTLE_CORNERS[0]);
+			lookAtAnimateto(startPos.add(0, 0, 1.0f), endPos.add(1.0f,0,0), 1500, 1600);
+		} else if(time <= 2000) {
+			Vector3 startPos = new Vector3(CASTLE_CORNERS[0]);
+			Vector3 endPos = new Vector3(CASTLE_CORNERS[1].x, 3000.0f, CASTLE_CORNERS[1].z);
+			positionAnimateTo(startPos, endPos, 1600, 2000);
+			lookAtAnimateto(startPos.add(1.0f, 0, 0), endPos.add(0,0,-1.0f), 1600, 2000);
+		} else if(time <= START_WATER) {
+			Vector3 startPos = new Vector3(lastPosition);
+			Vector3 endPos = new Vector3(1000.0f, 2500.0f, 2000.0f);
+			positionAnimateTo(startPos, endPos, 2000, START_WATER);
+			lookAtAnimateto(startPos.add(0,0,-1.0f), endPos.add(0, -1.0f, -1.0f), 2000, START_WATER);
+		} else if(time <= START_WATER + 100) {
+			Vector3 startPos = new Vector3(lastPosition);
 			Vector3 endPos = new Vector3(1000.0f, 2000.0f, 1500.0f);
-			positionAnimateTo(startPos, endPos, 0, 100);
-			lookAtAnimateto(startPos.add(0, -1.0f, -1.0f), endPos.add(0,-0.5f,-1.0f), 0, 100);
+			positionAnimateTo(startPos, endPos, START_WATER + 0, START_WATER + 100);
+			lookAtAnimateto(startPos.add(0, -1.0f, -1.0f), endPos.add(0,-0.5f,-1.0f), START_WATER + 0, START_WATER + 100);
 			
-		} else if(time <= 200) {
+		} else if(time <=START_WATER + 200) {
 			Vector3 startPos = new Vector3(lastPosition);
 			Vector3 endPos = new Vector3(1000.0f, 1500.0f, 0.0f);
-			positionAnimateTo(startPos, endPos, 101, 200);
-			lookAtAnimateto(startPos.add(0, -0.5f, -1.0f), endPos.add(0,-0.1f,-1.0f), 101, 200);
-		} else if(time <= 500) {
+			positionAnimateTo(startPos, endPos,START_WATER +  101,START_WATER + 200);
+			lookAtAnimateto(startPos.add(0, -0.5f, -1.0f), endPos.add(0,-0.1f,-1.0f),START_WATER + 101,START_WATER + 200);
+		} else if(time <=START_WATER + 500) {
 			Vector3 startPos = new Vector3(lastPosition);
 			Vector3 endPos = new Vector3(1000.0f, 1000.0f, -4000.0f);
-			positionAnimateTo(startPos, endPos, 201, 500);
-			lookAtAnimateto(startPos.add(0, -0.1f, -1.0f), endPos.add(0,0,-1.0f), 201, 500);
-		} else if(time <= 600) {
+			positionAnimateTo(startPos, endPos,START_WATER + 201,START_WATER +  500);
+			lookAtAnimateto(startPos.add(0, -0.1f, -1.0f), endPos.add(0,0,-1.0f),START_WATER + 201,START_WATER +  500);
+		} else if(time <=START_WATER + 600) {
 			Vector3 startPos = new Vector3(lastPosition);
 			Vector3 endPos = new Vector3(750.0f, 1000.0f, -4750.0f);
-			positionAnimateTo(startPos, endPos, 500, 600);
-			lookAtAnimateto(startPos.add(0, 0, -1.0f), endPos.add(-1.0f, 0, 0.0f), 500, 600);
-		} else if(time <= 800) {
+			positionAnimateTo(startPos, endPos,START_WATER + 500,START_WATER + 600);
+			lookAtAnimateto(startPos.add(0, 0, -1.0f), endPos.add(-1.0f, 0, 0.0f),START_WATER + 500,START_WATER + 600);
+		} else if(time <=START_WATER + 800) {
 			Vector3 startPos = new Vector3(lastPosition);
 			Vector3 endPos = new Vector3(lightHousePos[0], 1000.0f, -3000.0f);
-			positionAnimateTo(startPos, endPos, 600, 800);
-			lookAtAnimateto(startPos.add(-1.0f, 0, 0), endPos.add(0, 0, 1.0f), 600, 800);
-		} else if(time <= 2000) {
+			positionAnimateTo(startPos, endPos,START_WATER + 600,START_WATER + 800);
+			lookAtAnimateto(startPos.add(-1.0f, 0, 0), endPos.add(0, 0, 1.0f),START_WATER + 600,START_WATER + 800);
+		} else if(time <=START_WATER + 2000) {
 			Vector3 target = new Vector3(lightHousePos[0], 1000.0f, lightHousePos[2]);
 			Vector3 startPos = new Vector3(lastPosition);
-			rotateAnimation(startPos, target, (float) (Math.PI), (float) (Math.PI * 4), 800, 2000);
-		} else if(time <= 3000) {
+			rotateAnimation(startPos, target, (float) (Math.PI), (float) (Math.PI * 4),START_WATER + 800,START_WATER + 2000);
+		} else if(time <=START_WATER + 3000) {
 			Vector3 startPos = new Vector3(lastPosition);
 			Vector3 endPos = new Vector3(-1500.0f, 3500.0f, 4500.0f);
 			
 			Vector3 startTarget = new Vector3(lightHousePos[0], 1000.0f, lightHousePos[2]);
 			Vector3 endTarget = new Vector3(lightHousePos[0], 0.0f, lightHousePos[2]);
-			positionAnimateTo(startPos, endPos, 2000, 3000);
-			lookAtAnimateto(startTarget, endTarget, 2000, 3000);
+			positionAnimateTo(startPos, endPos,START_WATER + 2000,START_WATER + 3000);
+			lookAtAnimateto(startTarget, endTarget,START_WATER + 2000,START_WATER + 3000);
 		}
 		time++;
 	}
