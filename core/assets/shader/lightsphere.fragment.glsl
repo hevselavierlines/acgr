@@ -3,11 +3,14 @@ varying vec3 v_pos;
 varying vec3 v_normal;
 uniform vec3 Light_intensities;
 uniform sampler2D u_texture;
+uniform mat4 u_projProj;
+uniform mat4 u_projView;
 const float exposure = 0.3;
 const float decay = 0.5;
 const float density = 0.6;
 const float weight = 1.0;
 const vec2 lightPositionOnScreen = vec2(0.0, 0.0);
+uniform vec4 Light_position;
 const int NUM_SAMPLES = 10;
 
 void main() {
@@ -16,10 +19,16 @@ void main() {
 //	coordinates.y = gl_FragCoord.y / gl_FragCoord.w;
 //	coordinates.z = gl_FragCoord.z / gl_FragCoord.w;
 //
-	vec2 alpha = 1.0 - abs(v_texCoord);
-	alpha.y += 0.4;
-	float putTogether = (alpha.x + alpha.y) / 4.0;
-	vec4 finalColor = vec4(Light_intensities, putTogether);
+	vec4 lightPos = u_projProj * u_projView * Light_position;
+	vec4 finalColor;
+	if(lightPos.y < 1.0 && lightPos.y > -1.0) {
+		finalColor = vec4(1.0, 0.0, 0.0, 1.0);
+	} else {
+		vec2 alpha = 1.0 - abs(v_texCoord);
+		alpha.y += 0.4;
+		float putTogether = (alpha.x + alpha.y) / 4.0;
+		finalColor = vec4(Light_intensities, putTogether);
+	}
 	gl_FragColor = finalColor;
 
 //	vec2 deltaTextCoord = lightPositionOnScreen.xy;//vec2( gl_TexCoord[0].st - lightPositionOnScreen.xy );

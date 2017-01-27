@@ -26,7 +26,7 @@ public final class MyCamera {
 	private Vector3 lastPosition;
 	/** the field of view of the height, in degrees **/
 	public float fieldOfView = 67;
-	private int time = 0;
+	private int time = START_WATER;
 	/** the position of the camera **/
 	public final Vector3 position = new Vector3();
 	/** the unit length direction vector of the camera **/
@@ -397,7 +397,7 @@ public final class MyCamera {
 			positionAnimateTo(startPos, endPos, 1600, 2000);
 			lookAtAnimateto(startPos.add(1.0f, 0, 0), endPos.add(0,0,-1.0f), 1600, 2000);
 		} else if(time <= START_WATER) {
-			Vector3 startPos = new Vector3(lastPosition);
+			Vector3 startPos = new Vector3(CASTLE_CORNERS[1].x, 3000.0f, CASTLE_CORNERS[1].z);
 			Vector3 endPos = new Vector3(1000.0f, 2500.0f, 2000.0f);
 			positionAnimateTo(startPos, endPos, 2000, START_WATER);
 			lookAtAnimateto(startPos.add(0,0,-1.0f), endPos.add(0, -1.0f, -1.0f), 2000, START_WATER);

@@ -13,6 +13,7 @@ import com.badlogic.gdx.graphics.VertexAttribute;
 import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.loader.ObjLoader;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
+import com.badlogic.gdx.math.Matrix4;
 
 
 public class WaterTest extends ApplicationAdapter implements InputProcessor {
@@ -47,27 +48,28 @@ public class WaterTest extends ApplicationAdapter implements InputProcessor {
 	private final float WATER_AMPLITUDE = 0.6f;
 	private final float WATER_WAVELENGTH = 30.0f;
 	private Castle castle;
+	private Moon moon;
 	
 	public final static float[] LIGHT_COLOR = new float[] {0.94f, 0.856f, 0.934f};
 	public final static float[] LIGHTHOUSE_POS = new float[] {10.0f, 1061.84f, -1000.0f, 1.0f};
 	public final static float LIGHT_ATTENUATION = 0.0004f;
 	public final static float LIGHT_CONEANGLE = 0.7f;
 	
-	private Mesh createScreenRect() {
+	private Mesh createScreenRect(float size) {
 		float vertices[] = new float[]{
-				-1.0f, -1.0f, -1.0f,
+				-size, -size, -1.0f,
 				0.0f, 0.0f, -1.0f,
 				-1.0f, -1.0f,
 				
-				-1.0f, 1.0f, -1.0f,
+				-size, size, -1.0f,
 				0.0f, 0.0f, -1.0f,
 				-1.0f, 1.0f,
 				
-				1.0f, -1.0f, -1.0f,
+				size, -size, -1.0f,
 				0.0f, 0.0f, -1.0f,
 				1.0f, -1.0f,
 				
-				1.0f, 1.0f, -1.0f,
+				size, size, -1.0f,
 				0.0f, 0.0f, -1.0f,
 				1.0f, 1.0f
 		};
@@ -121,7 +123,7 @@ public class WaterTest extends ApplicationAdapter implements InputProcessor {
 	    loadEnvironmentalCube();
 	    loadTextures();
 		
-		screenRect = createScreenRect();
+		screenRect = createScreenRect(0.3f);
 		
 		skybox = new Skybox();
 		skybox.setBrightness(brightness);
@@ -130,6 +132,7 @@ public class WaterTest extends ApplicationAdapter implements InputProcessor {
 		beach.setBrightness(brightness);
 		
 		castle = new Castle();
+		moon = new Moon();
 	}
 	
 	private void loadEnvironmentalCube() {
@@ -165,7 +168,7 @@ public class WaterTest extends ApplicationAdapter implements InputProcessor {
 	    Gdx.gl20.glTexImage2D(GL20.GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0, GL20.GL_RGB, textureData[4].getWidth(), textureData[4].getHeight(), 0, GL20.GL_RGBA, GL20.GL_UNSIGNED_BYTE, textureData[4].consumePixmap().getPixels());
 	    Gdx.gl20.glTexImage2D(GL20.GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, GL20.GL_RGB, textureData[5].getWidth(), textureData[5].getHeight(), 0, GL20.GL_RGBA, GL20.GL_UNSIGNED_BYTE, textureData[5].consumePixmap().getPixels());
 	
-	    Gdx.gl20.glTexParameteri ( GL20.GL_TEXTURE_CUBE_MAP, GL20.GL_TEXTURE_MIN_FILTER,GL20.GL_LINEAR_MIPMAP_LINEAR );     
+	    Gdx.gl20.glTexParameteri ( GL20.GL_TEXTURE_CUBE_MAP, GL20.GL_TEXTURE_MIN_FILTER,GL20.GL_LINEAR_MIPMAP_NEAREST );     
 	    Gdx.gl20.glTexParameteri ( GL20.GL_TEXTURE_CUBE_MAP, GL20.GL_TEXTURE_MAG_FILTER,GL20.GL_LINEAR );
 	    Gdx.gl20.glTexParameteri ( GL20.GL_TEXTURE_CUBE_MAP, GL20.GL_TEXTURE_WRAP_S, GL20.GL_CLAMP_TO_EDGE );
 	    Gdx.gl20.glTexParameteri ( GL20.GL_TEXTURE_CUBE_MAP, GL20.GL_TEXTURE_WRAP_T, GL20.GL_CLAMP_TO_EDGE );   
@@ -177,34 +180,57 @@ public class WaterTest extends ApplicationAdapter implements InputProcessor {
 		Gdx.gl20.glActiveTexture(GL20.GL_TEXTURE0);
 	    Texture textureWall = new Texture("lighthouse/wall.jpg");
 		textureWall.bind();
+		Gdx.gl20.glGenerateMipmap(GL20.GL_TEXTURE0);
 	
 		Gdx.gl20.glActiveTexture(GL20.GL_TEXTURE1);
 		Texture textureTower = new Texture("lighthouse/wall.jpg");
 		textureTower.bind();
+		Gdx.gl20.glGenerateMipmap(GL20.GL_TEXTURE1);
 		
 		Gdx.gl20.glActiveTexture(GL20.GL_TEXTURE2);
 		Texture textureStick = new Texture("lighthouse/wall.jpg");
 		textureStick.bind();
+		Gdx.gl20.glGenerateMipmap(GL20.GL_TEXTURE2);
 		
 		Gdx.gl20.glActiveTexture(GL20.GL_TEXTURE3);
 		Texture texture3 = new Texture("lighthouse/roof.png");
 		texture3.bind();
+		Gdx.gl20.glGenerateMipmap(GL20.GL_TEXTURE3);
 		
 		Gdx.gl20.glActiveTexture(GL20.GL_TEXTURE4);
 		Texture texture4 = new Texture("lighthouse/wall.jpg");
 		texture4.bind();
+		Gdx.gl20.glGenerateMipmap(GL20.GL_TEXTURE4);
 		
 		Gdx.gl20.glActiveTexture(GL20.GL_TEXTURE5);
 		Texture texture5 = new Texture("lighthouse/soil.jpg");
 		texture5.bind();
+		Gdx.gl20.glGenerateMipmap(GL20.GL_TEXTURE5);
 		
 		Gdx.gl20.glActiveTexture(GL20.GL_TEXTURE6);
 		Texture texture6 = new Texture("lighthouse/wall.jpg");
 		texture6.bind();
+		Gdx.gl20.glGenerateMipmap(GL20.GL_TEXTURE6);
 		
 		Gdx.gl20.glActiveTexture(GL20.GL_TEXTURE7);
 		Texture texture7 = new Texture("halo.bmp");
 		texture7.bind();
+		Gdx.gl20.glGenerateMipmap(GL20.GL_TEXTURE7);
+		
+		Gdx.gl20.glActiveTexture(GL20.GL_TEXTURE8);
+		Texture texture8 = new Texture("water/sandtexture.jpg");
+		texture8.bind();
+		Gdx.gl20.glGenerateMipmap(GL20.GL_TEXTURE8);
+		
+		Gdx.gl20.glActiveTexture(GL20.GL_TEXTURE9);
+		Texture texture9 = new Texture("water/sandnormal.jpg");
+		texture9.bind();
+		Gdx.gl20.glGenerateMipmap(GL20.GL_TEXTURE9);
+		
+		Gdx.gl20.glActiveTexture(GL20.GL_TEXTURE10);
+		Texture texture10 = new Texture("moon/moon.jpg");
+		texture10.bind();
+		Gdx.gl20.glGenerateMipmap(GL20.GL_TEXTURE10);
 	}
 	
 	public void generateValues(int numWaves) {
@@ -248,6 +274,11 @@ public class WaterTest extends ApplicationAdapter implements InputProcessor {
 		eyePos[0] = cam.position.x;
 		eyePos[1] = cam.position.y;
 		eyePos[2] = cam.position.z;
+		/*mat4 normalMatrix = transpose(inverse(modelView));*/
+		//Matrix4 normalMatrix = cam.view.inv().tra();
+		Matrix4 normalMatrix = cam.view.cpy();
+		normalMatrix.inv().tra();
+		waterShader.setUniformMatrix("u_projNormal", normalMatrix);
 		waterShader.setUniform3fv("u_eyePos", eyePos, 0, 3);
 		
 		lightDir0[0] = (float) Math.sin(Math.toRadians(lighthouseAngle0));
@@ -277,6 +308,9 @@ public class WaterTest extends ApplicationAdapter implements InputProcessor {
 		waterShader.setUniform1fv("speed", speed, 0, numWaves);
 		waterShader.setUniform2fv("direction", direction, 0, numWaves * 2);
 		
+		waterShader.setUniform3fv("Moon_position", Moon.MOON_POSITION, 0, 3);
+		waterShader.setUniformf("Moon_intensity", Moon.MOON_INTENSITY);
+		
 		waterTime += 0.1f;
 		
 	    meshPlane.render(waterShader, GL20.GL_TRIANGLES, 0, meshPlane.getMaxIndices());
@@ -289,6 +323,10 @@ public class WaterTest extends ApplicationAdapter implements InputProcessor {
 	    lighthouseShader.setUniform4fv("Light_position", LIGHTHOUSE_POS, 0, LIGHTHOUSE_POS.length);
 	    lighthouseShader.setUniformf("Light_ambientCoefficient", brightness);
 	    lighthouseShader.setUniformMatrix("u_projTrans", cam.combined);
+	    lighthouseShader.setUniformMatrix("u_projNormal", normalMatrix);
+	    lighthouseShader.setUniform3fv("Moon_position", Moon.MOON_POSITION, 0, 3);
+	    lighthouseShader.setUniformf("Moon_intensity", Moon.MOON_INTENSITY);
+	    lighthouseShader.setUniformf("Light_attenuation", LIGHT_ATTENUATION);
 		int currTexture = 0;
 		for(Mesh currMesh : lightHouse.meshes) {
 			lighthouseShader.setUniformi("u_texture", currTexture++);
@@ -296,18 +334,19 @@ public class WaterTest extends ApplicationAdapter implements InputProcessor {
 		}
 		lighthouseShader.end();
 		skybox.render(cam);
-		Gdx.gl.glDisable(GL20.GL_DEPTH_TEST);
-		Gdx.gl.glEnable(GL20.GL_BLEND);
-		Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
-		lightsphereShader.begin();
-		lightsphereShader.setUniform4fv("Light_position", LIGHTHOUSE_POS, 0, LIGHTHOUSE_POS.length);
-		lightsphereShader.setUniformMatrix("u_projProj", cam.projection);
-	    lightsphereShader.setUniformMatrix("u_projView", cam.view);
-	    lightsphereShader.setUniform3fv("Light_intensities", LIGHT_COLOR, 0, LIGHT_COLOR.length);
-	    lightsphereShader.setUniformi("u_texture", 7);
-	    
-	    //screenRect.render(lightsphereShader, GL20.GL_TRIANGLES);
-		lightsphereShader.end();
+		moon.render(cam);
+//		Gdx.gl.glDisable(GL20.GL_DEPTH_TEST);
+//		Gdx.gl.glEnable(GL20.GL_BLEND);
+//		Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+//		lightsphereShader.begin();
+//		lightsphereShader.setUniform4fv("Light_position", LIGHTHOUSE_POS, 0, LIGHTHOUSE_POS.length);
+//		lightsphereShader.setUniformMatrix("u_projProj", cam.projection);
+//	    lightsphereShader.setUniformMatrix("u_projView", cam.view);
+//	    lightsphereShader.setUniform3fv("Light_intensities", LIGHT_COLOR, 0, LIGHT_COLOR.length);
+//	    lightsphereShader.setUniformi("u_texture", 7);
+//	    
+//	    screenRect.render(lightsphereShader, GL20.GL_TRIANGLES);
+//		lightsphereShader.end();
 	}
 	
 	public float[] randomEight(double min, double max, int numbers) {

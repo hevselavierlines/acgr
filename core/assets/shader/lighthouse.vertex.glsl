@@ -19,6 +19,8 @@ void main() {
 	vertex.x += Light_position.x;
 	vertex.z += Light_position.z;
 
+	v_pos = vertex.xyz;
+	v_normal = a_normal;
 	v_texCoord = a_texCoord0;
 	gl_Position = u_projTrans * vertex;
 }
