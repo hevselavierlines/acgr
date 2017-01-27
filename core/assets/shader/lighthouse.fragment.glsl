@@ -20,5 +20,6 @@ void main() {
 				* max(dot(normalMoon,moonLight), 0.0)
 				* Moon_intensity/(moonDistance*Light_attenuation);
 
-	gl_FragColor = diffuse * 0.5;
+	gl_FragColor = diffuse * 0.5
+		+ Light_ambientCoefficient * ambientColor;
 }
